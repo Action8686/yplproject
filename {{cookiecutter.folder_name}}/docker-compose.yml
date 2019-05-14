@@ -1,0 +1,34 @@
+{% set num_splashes = cookiecutter.num_splashes|int %}
+
+version: '2'
+
+services:
+    haproxy:
+        image: haproxy:1.7
+        ports:
+            # stats
+            - "8036:8036"
+
+            # splash
+            - "8050:8050"
+        links:
+            {%- for i in range(num_splashes) %}
+            - splash{{i}}
+            {%- endfor %}
+        volumes:
+            - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+
+    {%- for i in range(num_splashes) %}
+
+    splash{{i}}:
+        image: scrapinghub/splash:latest
+        command: --max-timeout 20 --slots 10 --maxrss 3000 --verbosity 1
+        expose:
+            - 8050
+        mem_limit: 4200m
+        memswap_limit: 5400m
+        restart: always
+
+    {%- endfor %}
+
+
